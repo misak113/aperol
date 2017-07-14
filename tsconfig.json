@@ -1,10 +1,11 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "outDir": "dist",
+        "rootDir": "src",
+        "outDir": "",
         "sourceMap": true,
         "target": "es6",
-        "declaration": false,
+        "declaration": true,
         "moduleResolution": "node",
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
@@ -17,5 +18,8 @@
         "typeRoots": [
             "node_modules/@types/"
         ]
-    }
+    },
+    "include": [
+        "src/**/*.ts"
+    ]
 }
