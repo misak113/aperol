@@ -3,6 +3,16 @@
   "version": "1.0.0",
   "description": "JS library for asynchronous processing of side effects in action based application.",
   "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "package.json",
+    "package-lock.json"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "scripts": {
     "build": "webpack --config=webpack.config.js",
     "prebuild": "rm -rf dist/*",
