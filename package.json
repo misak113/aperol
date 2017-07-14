@@ -16,7 +16,7 @@
   "scripts": {
     "build": "webpack --config=webpack.config.js",
     "prebuild": "rm -rf dist/*",
-    "prepublish": "npm run prebuild && npm run build",
+    "prepare": "npm run build",
     "test": "NODE_ENV=test mocha --opts mocha.opts",
     "lint": "tslint --format checkstyle --type-check --project tsconfig.json --config tslint.json --out dist/tslint-report.xml {src,tests}/**/*.{ts,tsx}",
     "lint-humanized": "tslint --config tslint.json --type-check --project tsconfig.json {src,tests}/**/*.{ts,tsx}"
