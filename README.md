@@ -1,5 +1,7 @@
 # Aperol
 
+[![Build Status](https://travis-ci.org/misak113/aperol.svg?branch=master)](https://travis-ci.org/misak113/aperol)
+
 JS library for asynchronous processing of side effects in action based application.
 
 ## Install
