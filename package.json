@@ -1,0 +1,29 @@
+{
+  "name": "aperol",
+  "version": "1.0.0",
+  "description": "JS library for asynchronous processing of side effects in action based application.",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/misak113/aperol.git"
+  },
+  "keywords": [
+    "async",
+    "flux",
+    "redux",
+    "await",
+    "yield",
+    "iterator",
+    "side-effects",
+    "action"
+  ],
+  "author": "Michael Zabka <zabka.michael@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/misak113/aperol/issues"
+  },
+  "homepage": "https://github.com/misak113/aperol#readme"
+}
