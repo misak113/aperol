@@ -12,7 +12,7 @@ module.exports = {
 	output: {
 		path: parameters.distPath,
 		filename: 'index.js',
-		library: 'library',
+		library: '',
 		libraryTarget: 'commonjs'
 	},
 	devtool: 'source-map',
