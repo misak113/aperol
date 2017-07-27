@@ -2,82 +2,76 @@
 import { createStore, Store, Middleware, Dispatch, Action } from 'redux';
 import IPromiseAction from './IPromiseAction';
 import ISaga from './ISaga';
-import IUpdaterYield from './IUpdaterYield';
-import ObservableSubscribed from './ObservableSubscribed';
+import AsyncIteratorStarted from './AsyncIteratorStarted';
 
 async function update(
-	subscriptions: Subscription[],
-	iterator: Iterator<IUpdaterYield>,
+	asyncIterator: AsyncIterableIterator<Action>,
 	dispatch: Dispatch<any>,
-	sourceAction: Action
 ) {
-	let nextResult;
-	do {
-		let item: IteratorResult<IUpdaterYield> = iterator.next(nextResult);
-		nextResult = undefined;
-		if (item.done) {
-			break;
-		} else
-		if (item.value instanceof Promise) {
-			nextResult = await item.value;
-		} else
-		if (item.value instanceof Observable) {
-			const observable = item.value;
-			const subscription = observable.subscribe(function (observableIterator: Iterator<IUpdaterYield>) {
-				update(subscriptions, observableIterator, dispatch, sourceAction);
-			});
-			subscriptions.push(subscription);
-			const promiseObservableSubscribed = dispatch({
-				type: ObservableSubscribed,
-				observable,
-				subscription,
-				sourceAction,
-			} as ObservableSubscribed<Action>) as Action as IPromiseAction;
-			if (promiseObservableSubscribed.__promise instanceof Promise) {
-				await promiseObservableSubscribed.__promise;
-			}
-		} else
-		if (typeof (item.value as Action).type !== 'undefined') {
-			const promiseAction = dispatch(item.value) as IPromiseAction;
+	for await (let value of asyncIterator) {
+		if (typeof value === 'object') {
+			const promiseAction = dispatch(value) as IPromiseAction;
 			if (promiseAction.__promise instanceof Promise) {
 				await promiseAction.__promise;
 			}
 		} else {
 			const error = new Error(
-				'Updater must yield action or promise. '
-				+ JSON.stringify(item.value) + ' given.'
+				'Updater must yield action. ' + JSON.stringify(value) + ' given.'
 			);
-			if (iterator.throw) {
-				iterator.throw(error);
+			if (asyncIterator.throw) {
+				asyncIterator.throw(error);
 			} else {
 				throw error;
 			}
 		}
-	} while (true);
+	}
 }
 
 export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
 	const sagaStore = createStore(saga.reducer);
-	const subscriptions: Subscription[] = [];
-	const middleware: Middleware = (store: Store<any>) => (nextDispatch: Dispatch<any>) => (action: any) => {
+	const asyncIterators: { [asyncIteratorUid: string]: AsyncIterableIterator<Action> } = {};
+	const middleware: Middleware = (store: Store<any>) => (nextDispatch: Dispatch<any>) => <TAction extends Action>(action: TAction) => {
 		const result = nextDispatch(action);
 		sagaStore.dispatch(action);
 		const model = sagaStore.getState();
-		const iterator = saga.updater(model, action);
-		const promise = update(subscriptions, iterator, store.dispatch, action);
+		const asyncIterator = saga.updater(model, action);
+		const asyncIteratorUid = generateUid();
+		asyncIterators[asyncIteratorUid] = asyncIterator;
+		const promise = update(asyncIterator, store.dispatch)
+			.then(() => {
+				delete asyncIterators[asyncIteratorUid];
+			});
+		if (action.type !== AsyncIteratorStarted) {
+			store.dispatch({
+				type: AsyncIteratorStarted,
+				asyncIterator,
+				promise,
+				sourceAction: action,
+			} as AsyncIteratorStarted<Action>);
+		}
 		Object.defineProperty(result, '__promise', {
 			enumerable: false,
 			configurable: false,
 			writable: false,
 			value: promise
 		});
-		return result as any;
+		return result;
 	};
 	const destroy = () => {
-		subscriptions.forEach((subscription: Subscription) => subscription.unsubscribe());
+		for (let asyncIteratorUid in asyncIterators) {
+			const asyncIterator = asyncIterators[asyncIteratorUid];
+			delete asyncIterators[asyncIteratorUid];
+			if (asyncIterator.return) {
+				asyncIterator.return();
+			}
+		}
 	};
 	return {
 		middleware,
 		destroy
 	};
+}
+
+function generateUid() {
+	return Math.random().toString().substr(2);
 }

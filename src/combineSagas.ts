@@ -2,20 +2,22 @@
 import { combineReducers, ReducersMapObject } from 'redux';
 import ISaga from './ISaga';
 import { Action } from 'redux';
-import IUpdaterYield from './IUpdaterYield';
 
-export interface ISagasMapObject {
-	[key: string]: ISaga<any>;
-}
+export type ISagasMapObject<
+	TModel extends { [ModelKey in TModelKey]: any },
+	TModelKey extends keyof TModel
+> = {
+	[ModelKey in TModelKey]: ISaga<TModel[ModelKey]>;
+};
 
 export interface ICombinedModel {
 	[key: string]: any;
 }
 
 export default function combineSagas<TModel extends ICombinedModel>(
-	sagas: ISagasMapObject
+	sagas: ISagasMapObject<TModel, keyof TModel>
 ): ISaga<TModel> {
-	const sagaKeys = Object.keys(sagas);
+	const sagaKeys: (keyof TModel)[] = Object.keys(sagas);
 	const reducer = combineReducers<TModel>(sagaKeys.reduce<ReducersMapObject>(
 		(reducers: ReducersMapObject, key: string) => {
 			const saga = sagas[key];
@@ -24,18 +26,9 @@ export default function combineSagas<TModel extends ICombinedModel>(
 		},
 		{}
 	));
-	const updater = function* (model: TModel, action: Action) {
+	const updater = async function* (model: TModel, action: Action) {
 		for (let key of sagaKeys) {
-			const saga = sagas[key];
-			const iterator = saga.updater(model[key], action);
-			let nextResult;
-			do {
-				let item: IteratorResult<IUpdaterYield> = iterator.next(nextResult);
-				if (item.done) {
-					break;
-				}
-				nextResult = yield item.value;
-			} while (true);
+			yield* sagas[key].updater(model[key], action);
 		}
 	};
 	return {
