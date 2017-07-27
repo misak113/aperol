@@ -1,6 +1,6 @@
 
-import '../../src/observable-polyfill';
-import '../../src/asyncIterator-polyfill';
+import '../../src/polyfill/observable';
+import '../../src/polyfill/asyncIterator';
 import 'babel-polyfill';
 import { createStore, applyMiddleware, Action } from 'redux';
 import * as should from 'should';
