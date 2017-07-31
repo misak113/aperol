@@ -31,7 +31,7 @@ const appSaga = {
 			case 'GREET_WITH_DELAY':
 				yield wait(1e3); // wait 1 second
 				// dispatch GREET action to store after delay
-				yield { type: 'GREET', model.message };
+				yield { type: 'GREET', message: model.message };
 				break;
 		}
 	},
