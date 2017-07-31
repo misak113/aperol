@@ -114,6 +114,12 @@ modelSaga.destroy();
 ## Notes
 *library automatically polyfill Observable if not available in global Symbol context with `zen-observable`*
 
+## Nightly builds
+New ideas, unconfirmed issueses & pull requests are always available in nightly build branch [`next`](https://github.com/misak113/aperol/tree/next). The corresponding built of npm package is also available under npm tag `next` in npm registry.
+```sh
+npm install aperol@next --save
+```
+
 ## Conclusion
 This library was involved because there was no standardized pure-functional way how handle asynchronous side effects in redux based application.
 Also missing standard way how to handle continual side-effects.
