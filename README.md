@@ -5,9 +5,10 @@
 JS library for asynchronous processing of side effects in action based application.
 
 ## Install
-```sh
-npm install aperol --save
-```
+<big><pre>
+npm install [aperol](https://www.npmjs.com/package/aperol) --save
+</pre></big>
+
 
 ## Usage
 ### Basic with redux
