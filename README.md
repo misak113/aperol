@@ -111,6 +111,13 @@ modelSaga.destroy();
 ```
 
 
+### Polyfill
+For running library in old browsers & non harmony flagged Node.js is necessary to polyfill `Symbol.asyncIterator`. You can achieve it by simple implementation included in library.
+```js
+require('aperol').polyfillAsyncIterator();
+```
+
+
 ## Motivation
 Many other projects like `redux-saga` & simple libraries like `prism` already supports side-effects, continual processing etc.
 However there are some deal breakers which motivates me to write self library. Here are the main points:
