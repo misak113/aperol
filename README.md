@@ -114,6 +114,13 @@ modelSaga.destroy();
 ## Notes
 *library automatically polyfill Observable if not available in global Symbol context with `zen-observable`*
 
+## TypeScript support
+Library is written in TypeScript & we are supporting it for you. It can be found all compiled `*.d.ts` files in `aperol/dist/` folder. By importing module with [`node` module resolution](https://www.typescriptlang.org/docs/handbook/module-resolution.html#node) configuration the library is typed automatically.
+```ts
+import { ISaga } from 'aperol';
+const mySaga: ISaga = ...my typed saga :)
+```
+
 ## Nightly builds
 New ideas, unconfirmed issueses & pull requests are always available in nightly build branch [`next`](https://github.com/misak113/aperol/tree/next). The corresponding built of npm package is also available under npm tag `next` in npm registry.
 ```sh
