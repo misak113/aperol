@@ -114,6 +114,18 @@ modelSaga.destroy();
 ## Notes
 *library automatically polyfill Observable if not available in global Symbol context with `zen-observable`*
 
+
+## Motivation
+Many other projects like `redux-saga` & simple libraries like `prism` already supports side-effects, continual processing etc.
+However there are some deal breakers which motivates me to write self library. Here are the main points:
+- using asyncIterators with support for async/await instead of `yield`ing promises (like in redux-saga),
+- model should be functional mainteined (like a redux state)
+- functional model allows you to use already existing dev tools for redux
+- Be less robust (then redux-saga)
+- Better static typing (with TypeScript)
+- Allow use same library for server-side rendering
+
+
 ## TypeScript support
 Library is written in TypeScript & we are supporting it for you. It can be found all compiled `*.d.ts` files in `aperol/dist/` folder. By importing module with [`node` module resolution](https://www.typescriptlang.org/docs/handbook/module-resolution.html#node) configuration the library is typed automatically.
 ```ts
