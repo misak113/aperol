@@ -111,6 +111,20 @@ modelSaga.destroy();
 ```
 
 
+### Model-less saga
+*Analogy to stateless components in React*
+```js
+async function* appSaga(action) {
+	switch (action.type) {
+		case 'GREET_WITH_DELAY':
+			await wait(1e3);
+			yield { type: 'GREET' };
+			break;
+	}
+}
+```
+
+
 ### Polyfill
 For running library in old browsers & non harmony flagged Node.js is necessary to polyfill `Symbol.asyncIterator`. You can achieve it by simple implementation included in library.
 ```js
