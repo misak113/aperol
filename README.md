@@ -44,7 +44,7 @@ const store = createStore(appReducer, applyMiddleware(modelSaga.middleware));
 ### Processing continual side-effects
 
 ```js
-const { AsyncIteratorStarted } = require('aperol');
+const { AsyncIteratorStarted, runItContinual } = require('aperol');
 async function* repeat(interval) {
 	while (true) {
 		await wait(interval);
@@ -67,10 +67,12 @@ const appSaga = {
 	async *updater(model, action) {
 		switch (action.type) {
 			case 'GREET_REPEATABLE':
-				for await (let _ of repeat(1e3)) { // repeat every 1 second
-					// dispatch GREET action to store repeatable
-					yield { type: 'GREET' };
-				}
+				yield runItContinual(async function* () {
+					for await (let _ of repeat(1e3)) { // repeat every 1 second
+						// dispatch GREET action to store repeatable
+						yield { type: 'GREET' };
+					}
+				});
 				break;
 			case 'GREET':
 				if (model.count > 10) {
@@ -80,7 +82,7 @@ const appSaga = {
 				break;
 			case 'STOP_GREETING':
 				// When no more needed processing side-effect greeting
-				model.greetingAsyncIterator.return();
+				await model.greetingAsyncIterator.return();
 				break;
 		}
 	},
@@ -99,15 +101,6 @@ const appSaga = combineSagas({
 });
 const modelSaga = createModelSaga(appSaga);
 // ... app code
-```
-
-
-### Destroy for backend
-When you plan to use aperol in node.js on backend it should be destroyed model saga when you no more needs it for user.
-
-```js
-// It will return to all async iterators
-modelSaga.destroy();
 ```
 
 
