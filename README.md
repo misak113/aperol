@@ -117,6 +117,25 @@ async function* appSaga(action) {
 }
 ```
 
+### Server side rendering
+
+```jsx
+const { createModelSaga } = require('aperol');
+const appReducer = require('./appReducer');
+const appSaga = require('./appSaga');
+handleGetRequest(async (request) => {
+	const modelSaga = createModelSaga(appSaga, {
+		// continual effects are not wanted to wait for
+		// do not run any continual generator & return to all continual async iterators
+		skipContinual: true,
+	});
+	const store = createStore(appReducer, applyMiddleware(modelSaga.middleware));
+	// Handle request by yourself & wait for updaters are done
+	await store.dispatch({ type: 'HANDLE_REQUEST', request }).__promise;
+	const html = renderToString(<Application state={store.getState()}/>);
+	return html;
+});
+```
 
 ### Polyfill
 For running library in old browsers & non harmony flagged Node.js is necessary to polyfill `Symbol.asyncIterator`. You can achieve it by simple implementation included in library.
