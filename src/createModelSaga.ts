@@ -1,5 +1,6 @@
 
 import { createStore, Store, Middleware, Dispatch, Action } from 'redux';
+import { generateUid } from './Helper/hash';
 import ISaga from './ISaga';
 import AsyncIteratorStarted from './AsyncIteratorStarted';
 import {
@@ -72,8 +73,4 @@ export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
 		middleware,
 		destroy
 	};
-}
-
-function generateUid() {
-	return Math.random().toString().substr(2);
 }
