@@ -5,6 +5,10 @@ import { extendWithInternalProperty } from './Helper/property';
 import ISaga from './ISaga';
 import AsyncIteratorStarted from './AsyncIteratorStarted';
 import {
+	SourceAction,
+	sourceActionProperty,
+	AsyncIteratorAction,
+	asyncIteratorProperty,
 	PromiseAction,
 	promiseProperty,
 } from './internalActions';
@@ -42,12 +46,16 @@ export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
 		const asyncIterator = saga.updater(model, action);
 		const asyncIteratorUid = generateUid();
 		asyncIterators[asyncIteratorUid] = asyncIterator;
-		const promise = update(asyncIterator, store.dispatch)
+		const baseDispatch = <A extends Action>(nextAction: A) => {
+			extendWithInternalProperty(nextAction, sourceActionProperty, action);
+			return store.dispatch(nextAction);
+		};
+		const promise = update(asyncIterator, baseDispatch)
 			.then(() => {
 				delete asyncIterators[asyncIteratorUid];
 			});
 		if (action.type !== AsyncIteratorStarted) {
-			store.dispatch({
+			baseDispatch({
 				type: AsyncIteratorStarted,
 				asyncIterator,
 				promise,
@@ -55,6 +63,7 @@ export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
 			} as AsyncIteratorStarted<Action>);
 		}
 		extendWithInternalProperty(result, promiseProperty, promise);
+		extendWithInternalProperty(result, asyncIteratorProperty, asyncIterator);
 		return result;
 	};
 	const destroy = () => {
