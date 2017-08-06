@@ -12,6 +12,8 @@ import {
 	PromiseAction,
 	promiseProperty,
 } from './internalActions';
+import combineSagas from './combineSagas';
+import * as continual from './Continual/continualSaga';
 
 async function update(
 	asyncIterator: AsyncIterableIterator<Action>,
@@ -37,13 +39,14 @@ async function update(
 }
 
 export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
-	const sagaStore = createStore(saga.reducer);
+	const extendedSaga = combineSagas({ application: saga, continual });
+	const sagaStore = createStore(extendedSaga.reducer);
 	const asyncIterators: { [asyncIteratorUid: string]: AsyncIterableIterator<Action> } = {};
 	const middleware: Middleware = (store: Store<any>) => (nextDispatch: Dispatch<any>) => <TAction extends Action>(action: TAction) => {
 		const result = nextDispatch(action);
 		sagaStore.dispatch(action);
 		const model = sagaStore.getState();
-		const asyncIterator = saga.updater(model, action);
+		const asyncIterator = extendedSaga.updater(model, action);
 		const asyncIteratorUid = generateUid();
 		asyncIterators[asyncIteratorUid] = asyncIterator;
 		const baseDispatch = <A extends Action>(nextAction: A) => {
@@ -83,7 +86,7 @@ export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
 				getState: () => null,
 			})(((a: Action) => a) as Dispatch<null>)(action) as TAction & PromiseAction & SourceAction & AsyncIteratorAction;
 		},
-		getModel: () => sagaStore.getState(),
+		getModel: () => sagaStore.getState().application,
 		destroy,
 	};
 }
