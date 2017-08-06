@@ -1,10 +1,12 @@
 
 import { createStore, Store, Middleware, Dispatch, Action } from 'redux';
 import { generateUid } from './Helper/hash';
+import { extendWithInternalProperty } from './Helper/property';
 import ISaga from './ISaga';
 import AsyncIteratorStarted from './AsyncIteratorStarted';
 import {
 	PromiseAction,
+	promiseProperty,
 } from './internalActions';
 
 async function update(
@@ -52,12 +54,7 @@ export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
 				sourceAction: action,
 			} as AsyncIteratorStarted<Action>);
 		}
-		Object.defineProperty(result, '__promise', {
-			enumerable: false,
-			configurable: false,
-			writable: false,
-			value: promise
-		});
+		extendWithInternalProperty(result, promiseProperty, promise);
 		return result;
 	};
 	const destroy = () => {
