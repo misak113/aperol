@@ -11,12 +11,11 @@ async function update(
 	asyncIterator: AsyncIterableIterator<Action>,
 	dispatch: Dispatch<any>,
 ) {
+	const promises = [];
 	for await (let value of asyncIterator) {
 		if (typeof value === 'object') {
 			const promiseAction = dispatch(value) as PromiseAction & Action;
-			if (promiseAction.__promise instanceof Promise) {
-				await promiseAction.__promise;
-			}
+			promises.push(promiseAction.__promise);
 		} else {
 			const error = new Error(
 				'Updater must yield action. ' + JSON.stringify(value) + ' given.'
@@ -28,6 +27,7 @@ async function update(
 			}
 		}
 	}
+	await Promise.all(promises);
 }
 
 export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
