@@ -77,6 +77,12 @@ export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
 	};
 	return {
 		middleware,
-		destroy
+		dispatch<TAction extends Action>(action: TAction): TAction & PromiseAction & SourceAction & AsyncIteratorAction {
+			return middleware({
+				dispatch: ((a: Action) => this.dispatch(a) as any),
+				getState: () => null,
+			})(((a: Action) => a) as Dispatch<null>)(action) as TAction & PromiseAction & SourceAction & AsyncIteratorAction;
+		},
+		destroy,
 	};
 }
