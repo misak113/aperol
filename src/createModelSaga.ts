@@ -83,6 +83,7 @@ export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
 				getState: () => null,
 			})(((a: Action) => a) as Dispatch<null>)(action) as TAction & PromiseAction & SourceAction & AsyncIteratorAction;
 		},
+		getModel: () => sagaStore.getState(),
 		destroy,
 	};
 }
