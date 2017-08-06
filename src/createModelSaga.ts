@@ -1,8 +1,10 @@
 
 import { createStore, Store, Middleware, Dispatch, Action } from 'redux';
-import IPromiseAction from './IPromiseAction';
 import ISaga from './ISaga';
 import AsyncIteratorStarted from './AsyncIteratorStarted';
+import {
+	PromiseAction,
+} from './internalActions';
 
 async function update(
 	asyncIterator: AsyncIterableIterator<Action>,
@@ -10,7 +12,7 @@ async function update(
 ) {
 	for await (let value of asyncIterator) {
 		if (typeof value === 'object') {
-			const promiseAction = dispatch(value) as IPromiseAction;
+			const promiseAction = dispatch(value) as PromiseAction & Action;
 			if (promiseAction.__promise instanceof Promise) {
 				await promiseAction.__promise;
 			}

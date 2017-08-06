@@ -10,7 +10,7 @@ import {
 	IAutoAdding,
 } from './sumModelMock';
 import createModelSaga from '../../src/createModelSaga';
-import IPromiseAction from '../../src/IPromiseAction';
+import { PromiseAction } from '../../src/internalActions';
 import AsyncIteratorStarted from '../../src/AsyncIteratorStarted';
 
 describe('Application.craeteModelSaga', function () {
@@ -34,7 +34,7 @@ describe('Application.craeteModelSaga', function () {
 			type: 'Added',
 			uid: 'new-uid',
 		};
-		const promiseAction = store.dispatch(add113) as Action as IPromiseAction;
+		const promiseAction = store.dispatch(add113) as Action as Action & PromiseAction;
 		await promiseAction.__promise;
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			add113,
@@ -130,7 +130,7 @@ describe('Application.craeteModelSaga', function () {
 			type: 'AutoAdding',
 			amount: 113,
 		} as IAutoAdding;
-		const promiseAction = store.dispatch(autoAdding113) as Action as IPromiseAction;
+		const promiseAction = store.dispatch(autoAdding113) as Action as Action & PromiseAction;
 		const asyncIteratorStarted = assertations.reducedActions!
 			.find((action: Action) => action.type === AsyncIteratorStarted) as AsyncIteratorStarted<IAutoAdding>;
 		should.notStrictEqual(asyncIteratorStarted, undefined);

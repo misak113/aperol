@@ -12,7 +12,7 @@ import {
 } from './sumModelMock';
 import createModelSaga from '../../src/createModelSaga';
 import combineSagas from '../../src/combineSagas';
-import IPromiseAction from '../../src/IPromiseAction';
+import { PromiseAction } from '../../src/internalActions';
 
 describe('Application.combineSaga', function () {
 
@@ -91,12 +91,12 @@ describe('Application.combineSaga', function () {
 		const warningShown = {
 			type: 'WarningShown',
 		} as IWarningShown;
-		const promiseAdd113 = store.dispatch(add113) as Action as IPromiseAction;
+		const promiseAdd113 = store.dispatch(add113) as Action as Action & PromiseAction;
 		await promiseAdd113.__promise;
-		const promiseSubtract112 = store.dispatch(subtract112) as Action as IPromiseAction;
+		const promiseSubtract112 = store.dispatch(subtract112) as Action as Action & PromiseAction;
 		await promiseSubtract112.__promise;
 		const secondSubtract112 = { ...subtract112 } as Action;
-		const promiseSubtract112Again = store.dispatch(secondSubtract112) as Action as IPromiseAction;
+		const promiseSubtract112Again = store.dispatch(secondSubtract112) as Action & PromiseAction;
 		await promiseSubtract112Again.__promise;
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			add113,
