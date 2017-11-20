@@ -75,13 +75,13 @@ describe('Application.craeteModelSaga', function () {
 			autoAdding113,
 		]);
 		autoAdding113.__doAdd!();
-		await new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise((resolve: () => void) => setTimeout(resolve, 20));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
 		]);
 		autoAdding113.__doAdd!();
-		await new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise((resolve: () => void) => setTimeout(resolve, 20));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
@@ -105,7 +105,7 @@ describe('Application.craeteModelSaga', function () {
 			autoAdding113,
 		]);
 		autoAdding113.__doAdd!();
-		await new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise((resolve: () => void) => setTimeout(resolve, 20));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
@@ -115,7 +115,7 @@ describe('Application.craeteModelSaga', function () {
 		// In native asyncIterator it is not waiting for promise & return (throw) immediatelly
 		// According to https://github.com/bergus/promise-cancellation/blob/master/API.md it is maybe not possible now
 		autoAdding113.__doAdd!();
-		await new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise((resolve: () => void) => setTimeout(resolve, 20));
 		const autoAddingAsyncIteratorStartedAction = assertations.dispatchedActions!
 			.find((action: AsyncIteratorStarted<IAutoAdding>) => action.type === AsyncIteratorStarted && action.sourceAction === autoAdding113);
 		should(autoAddingAsyncIteratorStartedAction).not.empty();
