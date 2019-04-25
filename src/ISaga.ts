@@ -4,6 +4,6 @@ import IUpdaterYield from './IUpdaterYield';
 
 interface ISaga<TModel> {
 	reducer(model: TModel, action: Action): TModel;
-	updater(model: TModel, action: Action): Iterator<IUpdaterYield>;
+	updater(model: TModel, action: Action): Iterator<IUpdaterYield> | AsyncIterator<IUpdaterYield>;
 }
 export default ISaga;

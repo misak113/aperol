@@ -1,5 +1,6 @@
 
 import '../../src/observable-polyfill';
+import '../../src/asyncIterator-polyfill';
 import 'babel-polyfill';
 import { createStore, applyMiddleware, Action } from 'redux';
 import * as should from 'should';
@@ -11,6 +12,7 @@ import {
 	sumReducer,
 	IAdd,
 	IAutoAdding,
+	asyncIteratorSumSaga,
 } from './sumModelMock';
 import createModelSaga from '../../src/createModelSaga';
 import IPromiseAction from '../../src/IPromiseAction';
@@ -131,5 +133,41 @@ describe('Application.craeteModelSaga', function () {
 		const observableSubscribed = assertations.reducedActions!
 			.find((action: Action) => action.type === ObservableSubscribed);
 		should.notStrictEqual(observableSubscribed, undefined);
+	});
+
+	it('should work even with async iterators as updater', function* () {
+		const modelSaga = createModelSaga(asyncIteratorSumSaga);
+		const store = createStore(sumReducer, applyMiddleware(modelSaga.middleware));
+		const add113 = {
+			type: 'Add',
+			amount: 113,
+		} as IAdd;
+		const added = {
+			type: 'Added',
+			uid: 'new-uid',
+		};
+		const promiseAction = store.dispatch(add113) as Action as IPromiseAction;
+		yield promiseAction.__promise;
+		should.deepEqual(assertations.reducedActions, [
+			reduxInit, // init redux in saga
+			add113,
+			added,
+		]);
+		should.deepEqual(assertations.updatedActions, [
+			add113,
+			added,
+		]);
+		should.deepEqual(assertations.dispatchedActions, [
+			reduxInit, // init redux in saga
+			add113,
+			added,
+		]);
+		should.deepEqual(assertations.updatedModels, [
+			{ sum: 113 },
+			{ sum: 113 },
+		]);
+		should.deepEqual(assertations.addedAmounts, [
+			113,
+		]);
 	});
 });

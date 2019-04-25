@@ -114,3 +114,52 @@ export const sumSaga = {
 		}
 	},
 };
+
+export const asyncIteratorSumSaga = {
+	reducer(model: ISumModel = initialSumModel, action: IAdd & ISubtract) {
+		assertations.reducedActions!.push(action);
+		switch (action.type) {
+			case 'Add':
+				return {
+					...model,
+					sum: model.sum + action.amount,
+				};
+			case 'Subtract':
+				return {
+					...model,
+					sum: model.sum - action.amount,
+				};
+			default:
+				return model;
+		}
+	},
+	async *updater(model: ISumModel, action: IAdd | IAutoAdding) {
+		assertations.updatedActions!.push(action);
+		assertations.updatedModels!.push(model);
+		switch (action.type) {
+			case 'Add':
+				const uid = await addAmount(action.amount);
+				yield {
+					type: 'Added',
+					uid,
+				} as IAdded;
+				break;
+			case 'AutoAdding':
+				const observable = new Observable((observer: SubscriptionObserver<number, Error>) => {
+					action.__doAdd = () => observer.next(action.amount);
+					return () => {
+						action.__doAdd = null;
+					};
+				});
+				yield observable.map(async function* (amount: number) {
+					const autoUid = await addAmount(amount);
+					yield {
+						type: 'Added',
+						uid: autoUid,
+					} as IAdded;
+				});
+				break;
+			default:
+		}
+	},
+};

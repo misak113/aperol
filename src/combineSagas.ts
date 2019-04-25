@@ -24,13 +24,13 @@ export default function combineSagas<TModel extends ICombinedModel>(
 		},
 		{}
 	));
-	const updater = function* (model: TModel, action: Action) {
+	const updater = async function* (model: TModel, action: Action) {
 		for (let key of sagaKeys) {
 			const saga = sagas[key];
 			const iterator = saga.updater(model[key], action);
 			let nextResult;
 			do {
-				let item: IteratorResult<IUpdaterYield> = iterator.next(nextResult);
+				let item: IteratorResult<IUpdaterYield> = await iterator.next(nextResult);
 				if (item.done) {
 					break;
 				}

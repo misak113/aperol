@@ -1,5 +1,6 @@
 
 import './observable-polyfill';
+import './asyncIterator-polyfill';
 import 'babel-polyfill';
 
 export { default as createModelSaga } from './createModelSaga';

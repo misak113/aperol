@@ -26,10 +26,10 @@ const appSaga = {
 				return model;
 		}
 	},
-	*updater(model, action) {
+	async *updater(model, action) {
 		switch (action.type) {
 			case 'GREET_WITH_DELAY':
-				yield wait(1e3); // wait 1 second
+				await wait(1e3); // wait 1 second
 				// dispatch GREET action to store after delay
 				yield { type: 'GREET', message: model.message };
 				break;
@@ -64,7 +64,7 @@ const appSaga = {
 				return model;
 		}
 	},
-	*updater(model, action) {
+	async *updater(model, action) {
 		switch (action.type) {
 			case 'GREET_REPEATABLE':
 				yield repeat(1e3) // repeat every 1 second
@@ -113,6 +113,7 @@ modelSaga.destroy();
 
 ## Notes
 *library automatically polyfill Observable if not available in global Symbol context with `zen-observable`*
+*library automatically polyfill asyncIterator if not available in global Symbol context*
 
 
 ## Motivation
@@ -132,6 +133,8 @@ Library is written in TypeScript & we are supporting it for you. It can be found
 import { ISaga } from 'aperol';
 const mySaga: ISaga = ...my typed saga :)
 ```
+
+*For Async Iterator types support add "esnext" flag to "libs" property of `tsconfig.json`*
 
 ## Nightly builds
 New ideas, unconfirmed issueses & pull requests are always available in nightly build branch [`next`](https://github.com/misak113/aperol/tree/next). The corresponding built of npm package is also available under npm tag `next` in npm registry.
