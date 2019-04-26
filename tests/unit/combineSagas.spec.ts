@@ -1,6 +1,4 @@
 
-import '../../src/observable-polyfill';
-import 'babel-polyfill';
 import { createStore, applyMiddleware, Action } from 'redux';
 import * as should from 'should';
 import {
@@ -14,7 +12,7 @@ import {
 } from './sumModelMock';
 import createModelSaga from '../../src/createModelSaga';
 import combineSagas from '../../src/combineSagas';
-import IPromiseAction from '../../src/IPromiseAction';
+import { PromiseAction } from '../../src/internalActions';
 
 describe('Application.combineSaga', function () {
 
@@ -45,11 +43,11 @@ describe('Application.combineSaga', function () {
 					return model;
 			}
 		},
-		*updater(model: IWarningModel, action: ISubtract) {
+		async *updater(model: IWarningModel, action: ISubtract) {
 			switch (action.type) {
 				case 'Subtract':
 					if (model.length % 2 === 0) {
-						yield alertAllWarnings();
+						await alertAllWarnings();
 						yield {
 							type: 'WarningShown',
 						} as IWarningShown;
@@ -69,7 +67,7 @@ describe('Application.combineSaga', function () {
 		shownWarningsCount = 0;
 	});
 
-	it('should combine sagas deep structure', function* () {
+	it('should combine sagas deep structure', async function () {
 		const appSaga = combineSagas({
 			math: combineSagas({
 				sum: sumSaga,
@@ -93,13 +91,13 @@ describe('Application.combineSaga', function () {
 		const warningShown = {
 			type: 'WarningShown',
 		} as IWarningShown;
-		const promiseAdd113 = store.dispatch(add113) as Action as IPromiseAction;
-		yield promiseAdd113.__promise;
-		const promiseSubtract112 = store.dispatch(subtract112) as Action as IPromiseAction;
-		yield promiseSubtract112.__promise;
+		const promiseAdd113 = store.dispatch(add113) as Action as Action & PromiseAction;
+		await promiseAdd113.__promise;
+		const promiseSubtract112 = store.dispatch(subtract112) as Action as Action & PromiseAction;
+		await promiseSubtract112.__promise;
 		const secondSubtract112 = { ...subtract112 } as Action;
-		const promiseSubtract112Again = store.dispatch(secondSubtract112) as Action as IPromiseAction;
-		yield promiseSubtract112Again.__promise;
+		const promiseSubtract112Again = store.dispatch(secondSubtract112) as Action & PromiseAction;
+		await promiseSubtract112Again.__promise;
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			add113,
 			added,
@@ -124,7 +122,12 @@ describe('Application.combineSaga', function () {
 		should.deepEqual(assertations.updatedModels, [
 			{ sum: 113 },
 			{ sum: 113 },
+			{ sum: 113 },
+			{ sum: 113 },
 			{ sum: 1 },
+			{ sum: 1 },
+			{ sum: -111 },
+			{ sum: -111 },
 			{ sum: -111 },
 			{ sum: -111 },
 		]);

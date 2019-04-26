@@ -26,10 +26,10 @@ const appSaga = {
 				return model;
 		}
 	},
-	*updater(model, action) {
+	async *updater(model, action) {
 		switch (action.type) {
 			case 'GREET_WITH_DELAY':
-				yield wait(1e3); // wait 1 second
+				await wait(1e3); // wait 1 second
 				// dispatch GREET action to store after delay
 				yield { type: 'GREET', message: model.message };
 				break;
@@ -41,36 +41,37 @@ const store = createStore(appReducer, applyMiddleware(modelSaga.middleware));
 ```
 
 
-### Observing continual side-effects
+### Processing continual side-effects
 
 ```js
-const { ObservableSubscribed } = require('aperol');
-function repeat(interval) {
-	return new Observable((observer) => {
-		const handler = setInterval(() => observer.next());
-		return () => clearInterval(handler);
-	});
+const { AsyncIteratorStarted, runItContinual } = require('aperol');
+async function* repeat(interval) {
+	while (true) {
+		await wait(interval);
+		yield;
+	}
 }
 const appSaga = {
 	reducer(model, action) {
 		switch (action.type) {
 			case 'GREET':
 				return { ...model, count: model.count + 1 };
-			case ObservableSubscribed:
+			case AsyncIteratorStarted:
 				if (action.sourceAction.type === 'GREET_REPEATABLE') {
-					return { ...model, greetingSubscription: action.subscription };
+					return { ...model, greetingAsyncIterator: action.asyncIterator };
 				}
 			default:
 				return model;
 		}
 	},
-	*updater(model, action) {
+	async *updater(model, action) {
 		switch (action.type) {
 			case 'GREET_REPEATABLE':
-				yield repeat(1e3) // repeat every 1 second
-				.map(function () {
-					// dispatch GREET action to store repeatable
-					yield { type: 'GREET' };
+				yield runItContinual(async function* () {
+					for await (let _ of repeat(1e3)) { // repeat every 1 second
+						// dispatch GREET action to store repeatable
+						yield { type: 'GREET' };
+					}
 				});
 				break;
 			case 'GREET':
@@ -80,8 +81,8 @@ const appSaga = {
 				}
 				break;
 			case 'STOP_GREETING':
-				// When no more needed subscribing side-effect greeting
-				model.greetingSubscription.unsubscribe();
+				// When no more needed processing side-effect greeting
+				await model.greetingAsyncIterator.return();
 				break;
 		}
 	},
@@ -103,16 +104,44 @@ const modelSaga = createModelSaga(appSaga);
 ```
 
 
-### Destroy for backend
-When you plan to use aperol in node.js on backend it should be destroyed model saga when you no more needs it for user.
-
+### Model-less saga
+*Analogy to stateless components in React*
 ```js
-// It will unsubscribe all Observable subscriptions
-modelSaga.destroy();
+async function* appSaga(action) {
+	switch (action.type) {
+		case 'GREET_WITH_DELAY':
+			await wait(1e3);
+			yield { type: 'GREET' };
+			break;
+	}
+}
 ```
 
-## Notes
-*library automatically polyfill Observable if not available in global Symbol context with `zen-observable`*
+### Server side rendering
+
+```jsx
+const { createModelSaga } = require('aperol');
+const appReducer = require('./appReducer');
+const appSaga = require('./appSaga');
+handleGetRequest(async (request) => {
+	const modelSaga = createModelSaga(appSaga, {
+		// continual effects are not wanted to wait for
+		// do not run any continual generator & return to all continual async iterators
+		skipContinual: true,
+	});
+	const store = createStore(appReducer, applyMiddleware(modelSaga.middleware));
+	// Handle request by yourself & wait for updaters are done
+	await store.dispatch({ type: 'HANDLE_REQUEST', request }).__promise;
+	const html = renderToString(<Application state={store.getState()}/>);
+	return html;
+});
+```
+
+### Polyfill
+For running library in old browsers & non harmony flagged Node.js is necessary to polyfill `Symbol.asyncIterator`. You can achieve it by simple implementation included in library.
+```js
+require('aperol').polyfillAsyncIterator();
+```
 
 
 ## Motivation
@@ -140,7 +169,7 @@ npm install aperol@next --save
 ```
 
 ## Conclusion
-This library was involved because there was no standardized pure-functional way how handle asynchronous side effects in redux based application.
+This library was involved because there was no standardized pure-functional way how process asynchronous side effects in redux based application.
 Also missing standard way how to handle continual side-effects.
-Aperol was inspired in some existing libraries like a [prism](https://github.com/salsita/prism) or [redux-saga](https://github.com/redux-saga/redux-saga).
+Aperol was inspired in some existing libraries like a [prism](https://github.com/salsita/prism), [redux-saga](https://github.com/redux-saga/redux-saga) or [RxJS](https://github.com/Reactive-Extensions/RxJS).
 Aperol uses the last syntactic sugar from ES2016/TypeScript like a `async/await`, `iterator`, `asyncIterator` etc. For using is strictly recommended using transpilers like a TypeScript or Babel.

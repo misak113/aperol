@@ -14,9 +14,9 @@
         "noUnusedParameters": true,
         "noUnusedLocals": true,
         "typeRoots": [
-            "../types/",
             "../node_modules/@types/"
-        ]
+        ],
+        "lib": ["esnext"]
     },
     "include": [
         "../src/**/*.ts",

@@ -1,7 +1,7 @@
 
 import * as should from 'should';
 import { Action } from 'redux';
-import ObservableSubscribed from '../../src/ObservableSubscribed';
+import AsyncIteratorStarted from '../../src/AsyncIteratorStarted';
 
 export interface ISumModel {
 	sum: number;
@@ -37,12 +37,10 @@ export const initialSumModel = {
 	sum: 0,
 };
 
-export const reduxInit = { type: '@@redux/INIT' };
-
 export function removeInternalActions(actions?: Action[]) {
 	return actions!
 		.filter((action: Action) => action.type.indexOf('@@redux/') !== 0)
-		.filter((action: Action) => action.type !== ObservableSubscribed);
+		.filter((action: Action) => action.type !== AsyncIteratorStarted);
 }
 
 export const assertations: {
@@ -84,31 +82,32 @@ export const sumSaga = {
 				return model;
 		}
 	},
-	*updater(model: ISumModel, action: IAdd | IAutoAdding) {
+	async *updater(model: ISumModel, action: IAdd | IAutoAdding) {
 		assertations.updatedActions!.push(action);
 		assertations.updatedModels!.push(model);
 		switch (action.type) {
 			case 'Add':
-				const uid = yield addAmount(action.amount);
+				const uid = await addAmount(action.amount);
 				yield {
 					type: 'Added',
 					uid,
 				} as IAdded;
 				break;
 			case 'AutoAdding':
-				const observable = new Observable((observer: SubscriptionObserver<number, Error>) => {
-					action.__doAdd = () => observer.next(action.amount);
-					return () => {
-						action.__doAdd = null;
-					};
-				});
-				yield observable.map(function* (amount: number) {
-					const autoUid = yield addAmount(amount);
+				async function* autoAdding() {
+					while (true) {
+						yield await new Promise((resolve: (amount: number) => void) => {
+							(action as IAutoAdding).__doAdd = () => resolve(action.amount);
+						});
+					}
+				}
+				for await (let amount of autoAdding()) {
+					const autoUid = await addAmount(amount);
 					yield {
 						type: 'Added',
 						uid: autoUid,
 					} as IAdded;
-				});
+				}
 				break;
 			default:
 		}

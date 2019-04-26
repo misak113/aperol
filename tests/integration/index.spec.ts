@@ -2,7 +2,7 @@
 import * as should from 'should';
 import createModelSaga from '../../src/createModelSaga';
 import combineSagas from '../../src/combineSagas';
-import ObservableSubscribed from '../../src/ObservableSubscribed';
+import AsyncIteratorStarted from '../../src/AsyncIteratorStarted';
 
 describe('index', () => {
 
@@ -10,19 +10,19 @@ describe('index', () => {
 		const {
 			createModelSaga: actualCreateModelSaga,
 			combineSagas: actualCombineSagas,
-			ObservableSubscribed: actualObservableSubscribed,
+			AsyncIteratorStarted: actualAsyncIteratorStarted,
 		} = require('../../src/index');
 
 		should(actualCreateModelSaga).ok();
 		should(actualCombineSagas).ok();
-		should(actualObservableSubscribed).ok();
+		should(actualAsyncIteratorStarted).ok();
 
 		should(actualCreateModelSaga).Function();
 		should(actualCombineSagas).Function();
-		should(actualObservableSubscribed).String();
+		should(actualAsyncIteratorStarted).String();
 
 		should(actualCreateModelSaga).equal(createModelSaga);
 		should(actualCombineSagas).equal(combineSagas);
-		should(actualObservableSubscribed).equal(ObservableSubscribed);
+		should(actualAsyncIteratorStarted).equal(AsyncIteratorStarted);
 	});
 });

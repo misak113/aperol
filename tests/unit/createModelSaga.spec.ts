@@ -1,10 +1,7 @@
 
-import '../../src/observable-polyfill';
-import 'babel-polyfill';
 import { createStore, applyMiddleware, Action } from 'redux';
 import * as should from 'should';
 import {
-	reduxInit,
 	removeInternalActions,
 	assertations,
 	sumSaga,
@@ -13,8 +10,8 @@ import {
 	IAutoAdding,
 } from './sumModelMock';
 import createModelSaga from '../../src/createModelSaga';
-import IPromiseAction from '../../src/IPromiseAction';
-import ObservableSubscribed from '../../src/ObservableSubscribed';
+import { PromiseAction } from '../../src/internalActions';
+import AsyncIteratorStarted from '../../src/AsyncIteratorStarted';
 
 describe('Application.craeteModelSaga', function () {
 
@@ -26,7 +23,7 @@ describe('Application.craeteModelSaga', function () {
 		assertations.dispatchedActions = [];
 	});
 
-	it('should reduce action & then apply async updater', function* () {
+	it('should reduce action & then apply async updater', async function () {
 		const modelSaga = createModelSaga(sumSaga);
 		const store = createStore(sumReducer, applyMiddleware(modelSaga.middleware));
 		const add113 = {
@@ -37,23 +34,23 @@ describe('Application.craeteModelSaga', function () {
 			type: 'Added',
 			uid: 'new-uid',
 		};
-		const promiseAction = store.dispatch(add113) as Action as IPromiseAction;
-		yield promiseAction.__promise;
-		should.deepEqual(assertations.reducedActions, [
-			reduxInit, // init redux in saga
+		const promiseAction = store.dispatch(add113) as Action as Action & PromiseAction;
+		await promiseAction.__promise;
+		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			add113,
 			added,
 		]);
-		should.deepEqual(assertations.updatedActions, [
+		should.deepEqual(removeInternalActions(assertations.updatedActions), [
 			add113,
 			added,
 		]);
-		should.deepEqual(assertations.dispatchedActions, [
-			reduxInit, // init redux in saga
+		should.deepEqual(removeInternalActions(assertations.dispatchedActions), [
 			add113,
 			added,
 		]);
 		should.deepEqual(assertations.updatedModels, [
+			{ sum: 113 },
+			{ sum: 113 },
 			{ sum: 113 },
 			{ sum: 113 },
 		]);
@@ -62,7 +59,7 @@ describe('Application.craeteModelSaga', function () {
 		]);
 	});
 
-	it('should reduce action & then apply async updater with yielded observable', function* () {
+	it('should reduce action & then apply async updater with continual side-effect', async function () {
 		const modelSaga = createModelSaga(sumSaga);
 		const store = createStore(sumReducer, applyMiddleware(modelSaga.middleware));
 		const autoAdding113 = {
@@ -73,19 +70,18 @@ describe('Application.craeteModelSaga', function () {
 			type: 'Added',
 			uid: 'new-uid',
 		};
-		const promiseAction = store.dispatch(autoAdding113) as Action as IPromiseAction;
-		yield promiseAction.__promise;
+		store.dispatch(autoAdding113);
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 		]);
 		autoAdding113.__doAdd!();
-		yield new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise((resolve: () => void) => setTimeout(resolve, 20));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
 		]);
 		autoAdding113.__doAdd!();
-		yield new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise((resolve: () => void) => setTimeout(resolve, 20));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
@@ -93,7 +89,7 @@ describe('Application.craeteModelSaga', function () {
 		]);
 	});
 
-	it('should unsubscribe all yielded observables after destroy', function* () {
+	it('should return all async iterators after destroy', async function () {
 		const modelSaga = createModelSaga(sumSaga);
 		const store = createStore(sumReducer, applyMiddleware(modelSaga.middleware));
 		const autoAdding113 = {
@@ -104,32 +100,42 @@ describe('Application.craeteModelSaga', function () {
 			type: 'Added',
 			uid: 'new-uid',
 		};
-		const promiseAction = store.dispatch(autoAdding113) as Action as IPromiseAction;
-		yield promiseAction.__promise;
+		store.dispatch(autoAdding113);
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 		]);
 		autoAdding113.__doAdd!();
-		yield new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise((resolve: () => void) => setTimeout(resolve, 20));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
 		]);
 		modelSaga.destroy();
-		should.strictEqual(autoAdding113.__doAdd, null);
+		// Because of polyfilled asyncIterator must be last promise resolved to correctly close iterator
+		// In native asyncIterator it is not waiting for promise & return (throw) immediatelly
+		// According to https://github.com/bergus/promise-cancellation/blob/master/API.md it is maybe not possible now
+		autoAdding113.__doAdd!();
+		await new Promise((resolve: () => void) => setTimeout(resolve, 20));
+		const autoAddingAsyncIteratorStartedAction = assertations.dispatchedActions!
+			.find((action: AsyncIteratorStarted<IAutoAdding>) => action.type === AsyncIteratorStarted && action.sourceAction === autoAdding113);
+		should(autoAddingAsyncIteratorStartedAction).not.empty();
+		const nextValue = await (autoAddingAsyncIteratorStartedAction as AsyncIteratorStarted<IAutoAdding>).asyncIterator.next();
+		should(nextValue.done).true();
 	});
 
-	it('should dispatch ObservableSubscribed action when yielded observable', function* () {
+	it('should dispatch AsyncIteratorStarted action always when iterator started', async function () {
 		const modelSaga = createModelSaga(sumSaga);
 		const store = createStore(sumReducer, applyMiddleware(modelSaga.middleware));
 		const autoAdding113 = {
 			type: 'AutoAdding',
 			amount: 113,
 		} as IAutoAdding;
-		const promiseAction = store.dispatch(autoAdding113) as Action as IPromiseAction;
-		yield promiseAction.__promise;
-		const observableSubscribed = assertations.reducedActions!
-			.find((action: Action) => action.type === ObservableSubscribed);
-		should.notStrictEqual(observableSubscribed, undefined);
+		const promiseAction = store.dispatch(autoAdding113) as Action as Action & PromiseAction;
+		const asyncIteratorStarted = assertations.reducedActions!
+			.find((action: Action) => action.type === AsyncIteratorStarted) as AsyncIteratorStarted<IAutoAdding>;
+		should.notStrictEqual(asyncIteratorStarted, undefined);
+		should(asyncIteratorStarted.type).equal(AsyncIteratorStarted);
+		should(asyncIteratorStarted.promise).equal(promiseAction.__promise);
+		should(asyncIteratorStarted.sourceAction).equal(autoAdding113);
 	});
 });
