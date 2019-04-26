@@ -1,16 +1,16 @@
-
-import { Action } from 'redux';
+import ObservableYield from './ObservableYield';
+import ActionYield from './ActionYield';
 
 // yielding of Observable could by recursive. However typescript could not describe it
 export type ISub2UpdaterYield = Promise<any>
-	| Observable<Iterator<any> | AsyncIterator<any>, Error>
-	| Action;
+	| ObservableYield
+	| ActionYield;
 
 export type ISubUpdaterYield = Promise<any>
-	| Observable<Iterator<ISub2UpdaterYield> | AsyncIterator<ISub2UpdaterYield>, Error>
-	| Action;
+	| ObservableYield<Observable<Iterator<ISub2UpdaterYield> | AsyncIterator<ISub2UpdaterYield>, Error>>
+	| ActionYield;
 
 type IUpdaterYield = Promise<any>
-	| Observable<Iterator<ISubUpdaterYield> | AsyncIterator<ISubUpdaterYield>, Error>
-	| Action;
+	| ObservableYield<Observable<Iterator<ISubUpdaterYield> | AsyncIterator<ISubUpdaterYield>, Error>>
+	| ActionYield;
 export default IUpdaterYield;

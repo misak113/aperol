@@ -2,6 +2,7 @@
 import * as should from 'should';
 import { Action } from 'redux';
 import ObservableSubscribed from '../../src/ObservableSubscribed';
+import { put, observe } from '../../src/index';
 
 export interface ISumModel {
 	sum: number;
@@ -90,10 +91,10 @@ export const sumSaga = {
 		switch (action.type) {
 			case 'Add':
 				const uid = yield addAmount(action.amount);
-				yield {
+				yield put<IAdded>({
 					type: 'Added',
 					uid,
-				} as IAdded;
+				});
 				break;
 			case 'AutoAdding':
 				const observable = new Observable((observer: SubscriptionObserver<number, Error>) => {
@@ -102,13 +103,13 @@ export const sumSaga = {
 						action.__doAdd = null;
 					};
 				});
-				yield observable.map(function* (amount: number) {
+				yield observe(observable.map(function* (amount: number) {
 					const autoUid = yield addAmount(amount);
-					yield {
+					yield put<IAdded>({
 						type: 'Added',
 						uid: autoUid,
-					} as IAdded;
-				});
+					});
+				}));
 				break;
 			default:
 		}
@@ -139,10 +140,10 @@ export const asyncIteratorSumSaga = {
 		switch (action.type) {
 			case 'Add':
 				const uid = await addAmount(action.amount);
-				yield {
+				yield put<IAdded>({
 					type: 'Added',
 					uid,
-				} as IAdded;
+				});
 				break;
 			case 'AutoAdding':
 				const observable = new Observable((observer: SubscriptionObserver<number, Error>) => {
@@ -151,13 +152,13 @@ export const asyncIteratorSumSaga = {
 						action.__doAdd = null;
 					};
 				});
-				yield observable.map(async function* (amount: number) {
+				yield observe(observable.map(async function* (amount: number) {
 					const autoUid = await addAmount(amount);
-					yield {
+					yield put<IAdded>({
 						type: 'Added',
 						uid: autoUid,
-					} as IAdded;
-				});
+					});
+				}));
 				break;
 			default:
 		}

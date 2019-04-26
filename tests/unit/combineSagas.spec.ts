@@ -1,5 +1,6 @@
 
 import '../../src/polyfill/observable';
+import { put } from '../../src/index';
 import 'babel-polyfill';
 import { createStore, applyMiddleware, Action } from 'redux';
 import * as should from 'should';
@@ -50,9 +51,9 @@ describe('Application.combineSaga', function () {
 				case 'Subtract':
 					if (model.length % 2 === 0) {
 						yield alertAllWarnings();
-						yield {
+						yield put<IWarningShown>({
 							type: 'WarningShown',
-						} as IWarningShown;
+						});
 					}
 					break;
 				default:
@@ -69,7 +70,7 @@ describe('Application.combineSaga', function () {
 		shownWarningsCount = 0;
 	});
 
-	it('should combine sagas deep structure', function* () {
+	it('should combine sagas deep structure', async function () {
 		const appSaga = combineSagas({
 			math: combineSagas({
 				sum: sumSaga,
@@ -94,12 +95,12 @@ describe('Application.combineSaga', function () {
 			type: 'WarningShown',
 		} as IWarningShown;
 		const promiseAdd113 = store.dispatch(add113) as Action as IPromiseAction;
-		yield promiseAdd113.__promise;
+		await promiseAdd113.__promise;
 		const promiseSubtract112 = store.dispatch(subtract112) as Action as IPromiseAction;
-		yield promiseSubtract112.__promise;
+		await promiseSubtract112.__promise;
 		const secondSubtract112 = { ...subtract112 } as Action;
 		const promiseSubtract112Again = store.dispatch(secondSubtract112) as Action as IPromiseAction;
-		yield promiseSubtract112Again.__promise;
+		await promiseSubtract112Again.__promise;
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			add113,
 			added,

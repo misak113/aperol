@@ -15,7 +15,7 @@ npm install [aperol](https://www.npmjs.com/package/aperol) --save
 
 ```js
 const wait = (timeout) => new Promise((resolve) => setTimeout(resolve, timeout));
-const { createModelSaga } = require('aperol');
+const { createModelSaga, put } = require('aperol');
 const appReducer = require('./appReducer');
 const appSaga = {
 	reducer(model, action) {
@@ -31,7 +31,7 @@ const appSaga = {
 			case 'GREET_WITH_DELAY':
 				await wait(1e3); // wait 1 second
 				// dispatch GREET action to store after delay
-				yield { type: 'GREET', message: model.message };
+				yield put({ type: 'GREET', message: model.message });
 				break;
 		}
 	},
@@ -44,7 +44,7 @@ const store = createStore(appReducer, applyMiddleware(modelSaga.middleware));
 ### Observing continual side-effects
 
 ```js
-const { ObservableSubscribed } = require('aperol');
+const { ObservableSubscribed, put, observe } = require('aperol');
 function repeat(interval) {
 	return new Observable((observer) => {
 		const handler = setInterval(() => observer.next());
@@ -67,16 +67,16 @@ const appSaga = {
 	async *updater(model, action) {
 		switch (action.type) {
 			case 'GREET_REPEATABLE':
-				yield repeat(1e3) // repeat every 1 second
+				yield observe(repeat(1e3) // repeat every 1 second
 				.map(function () {
 					// dispatch GREET action to store repeatable
-					yield { type: 'GREET' };
-				});
+					yield put({ type: 'GREET' });
+				}));
 				break;
 			case 'GREET':
 				if (model.count > 10) {
 					// dispatch GREETED_10_TIMES action to store after every 10th greeting
-					yield { type: 'GREETED_10_TIMES' };
+					yield put({ type: 'GREETED_10_TIMES' });
 				}
 				break;
 			case 'STOP_GREETING':

@@ -28,7 +28,7 @@ describe('Application.craeteModelSaga', function () {
 		assertations.dispatchedActions = [];
 	});
 
-	it('should reduce action & then apply async updater', function* () {
+	it('should reduce action & then apply async updater', async function () {
 		const modelSaga = createModelSaga(sumSaga);
 		const store = createStore(sumReducer, applyMiddleware(modelSaga.middleware));
 		const add113 = {
@@ -40,7 +40,7 @@ describe('Application.craeteModelSaga', function () {
 			uid: 'new-uid',
 		};
 		const promiseAction = store.dispatch(add113) as Action as IPromiseAction;
-		yield promiseAction.__promise;
+		await promiseAction.__promise;
 		should.deepEqual(assertations.reducedActions, [
 			reduxInit, // init redux in saga
 			add113,
@@ -64,7 +64,7 @@ describe('Application.craeteModelSaga', function () {
 		]);
 	});
 
-	it('should reduce action & then apply async updater with yielded observable', function* () {
+	it('should reduce action & then apply async updater with yielded observable', async function () {
 		const modelSaga = createModelSaga(sumSaga);
 		const store = createStore(sumReducer, applyMiddleware(modelSaga.middleware));
 		const autoAdding113 = {
@@ -76,18 +76,18 @@ describe('Application.craeteModelSaga', function () {
 			uid: 'new-uid',
 		};
 		const promiseAction = store.dispatch(autoAdding113) as Action as IPromiseAction;
-		yield promiseAction.__promise;
+		await promiseAction.__promise;
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 		]);
 		autoAdding113.__doAdd!();
-		yield new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise((resolve: () => void) => setTimeout(resolve, 2));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
 		]);
 		autoAdding113.__doAdd!();
-		yield new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise((resolve: () => void) => setTimeout(resolve, 2));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
@@ -95,7 +95,7 @@ describe('Application.craeteModelSaga', function () {
 		]);
 	});
 
-	it('should unsubscribe all yielded observables after destroy', function* () {
+	it('should unsubscribe all yielded observables after destroy', async function () {
 		const modelSaga = createModelSaga(sumSaga);
 		const store = createStore(sumReducer, applyMiddleware(modelSaga.middleware));
 		const autoAdding113 = {
@@ -107,12 +107,12 @@ describe('Application.craeteModelSaga', function () {
 			uid: 'new-uid',
 		};
 		const promiseAction = store.dispatch(autoAdding113) as Action as IPromiseAction;
-		yield promiseAction.__promise;
+		await promiseAction.__promise;
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 		]);
 		autoAdding113.__doAdd!();
-		yield new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise((resolve: () => void) => setTimeout(resolve, 2));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
@@ -121,7 +121,7 @@ describe('Application.craeteModelSaga', function () {
 		should.strictEqual(autoAdding113.__doAdd, null);
 	});
 
-	it('should dispatch ObservableSubscribed action when yielded observable', function* () {
+	it('should dispatch ObservableSubscribed action when yielded observable', async function () {
 		const modelSaga = createModelSaga(sumSaga);
 		const store = createStore(sumReducer, applyMiddleware(modelSaga.middleware));
 		const autoAdding113 = {
@@ -129,13 +129,13 @@ describe('Application.craeteModelSaga', function () {
 			amount: 113,
 		} as IAutoAdding;
 		const promiseAction = store.dispatch(autoAdding113) as Action as IPromiseAction;
-		yield promiseAction.__promise;
+		await promiseAction.__promise;
 		const observableSubscribed = assertations.reducedActions!
 			.find((action: Action) => action.type === ObservableSubscribed);
 		should.notStrictEqual(observableSubscribed, undefined);
 	});
 
-	it('should work even with async iterators as updater', function* () {
+	it('should work even with async iterators as updater', async function () {
 		const modelSaga = createModelSaga(asyncIteratorSumSaga);
 		const store = createStore(sumReducer, applyMiddleware(modelSaga.middleware));
 		const add113 = {
@@ -147,7 +147,7 @@ describe('Application.craeteModelSaga', function () {
 			uid: 'new-uid',
 		};
 		const promiseAction = store.dispatch(add113) as Action as IPromiseAction;
-		yield promiseAction.__promise;
+		await promiseAction.__promise;
 		should.deepEqual(assertations.reducedActions, [
 			reduxInit, // init redux in saga
 			add113,

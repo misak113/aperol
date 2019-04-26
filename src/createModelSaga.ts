@@ -4,6 +4,8 @@ import IPromiseAction from './IPromiseAction';
 import ISaga from './ISaga';
 import IUpdaterYield from './IUpdaterYield';
 import ObservableSubscribed from './ObservableSubscribed';
+import ObservableYield from './ObservableYield';
+import ActionYield from './ActionYield';
 
 async function update(
 	subscriptions: Subscription[],
@@ -21,29 +23,21 @@ async function update(
 		if (isPromiseIteration(item.value)) {
 			const promiseResult = await item.value;
 			if (isObservableIteration(promiseResult)) {
-				await handleObservable(dispatch, promiseResult, subscriptions, sourceAction);
+				await handleObservable(dispatch, promiseResult.observable, subscriptions, sourceAction);
 			} else
 			if (isActionIteration(promiseResult)) {
-				await handleAction(dispatch, promiseResult);
+				await handleAction(dispatch, promiseResult.action);
 			} else {
 				nextResult = promiseResult;
 			}
 		} else
 		if (isObservableIteration(item.value)) {
-			await handleObservable(dispatch, item.value, subscriptions, sourceAction);
+			await handleObservable(dispatch, item.value.observable, subscriptions, sourceAction);
 		} else
 		if (isActionIteration(item.value)) {
-			await handleAction(dispatch, item.value);
+			await handleAction(dispatch, item.value.action);
 		} else {
-			const error = new Error(
-				'Updater must yield action or promise. '
-				+ JSON.stringify(item.value) + ' given.'
-			);
-			if (iterator.throw) {
-				iterator.throw(error);
-			} else {
-				throw error;
-			}
+			nextResult = item.value;
 		}
 	} while (true);
 }
@@ -52,21 +46,21 @@ function isPromiseIteration(value: IUpdaterYield): value is Promise<any> {
 	return value instanceof Promise;
 }
 
-function isObservableIteration(value: IUpdaterYield): value is Observable<any, Error> {
-	return value instanceof Observable;
+function isObservableIteration(value: IUpdaterYield): value is ObservableYield {
+	return value instanceof ObservableYield;
 }
 
-function isActionIteration(value: IUpdaterYield): value is Action {
-	return typeof value === 'object' && typeof (value as Action).type !== 'undefined';
+function isActionIteration(value: IUpdaterYield): value is ActionYield {
+	return value instanceof ActionYield;
 }
 
 async function handleObservable(
-	dispatch: Dispatch<any>,
-	observable: Observable<any, Error>,
+	dispatch: Dispatch<Action>,
+	observable: Observable<Iterator<IUpdaterYield> | AsyncIterator<IUpdaterYield>, Error>,
 	subscriptions: Subscription[],
 	sourceAction: Action,
 ) {
-	const subscription = observable.subscribe(function (observableIterator: Iterator<IUpdaterYield>) {
+	const subscription = observable.subscribe(function (observableIterator: Iterator<IUpdaterYield> | AsyncIterator<IUpdaterYield>) {
 		update(subscriptions, observableIterator, dispatch, sourceAction);
 	});
 	subscriptions.push(subscription);
