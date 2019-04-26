@@ -1,11 +1,9 @@
 
 import '../../src/polyfill/observable';
 import '../../src/polyfill/asyncIterator';
-import 'babel-polyfill';
 import { createStore, applyMiddleware, Action } from 'redux';
 import * as should from 'should';
 import {
-	reduxInit,
 	removeInternalActions,
 	assertations,
 	sumSaga,
@@ -41,17 +39,15 @@ describe('Application.craeteModelSaga', function () {
 		};
 		const promiseAction = store.dispatch(add113) as Action as IPromiseAction;
 		await promiseAction.__promise;
-		should.deepEqual(assertations.reducedActions, [
-			reduxInit, // init redux in saga
+		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			add113,
 			added,
 		]);
-		should.deepEqual(assertations.updatedActions, [
+		should.deepEqual(removeInternalActions(assertations.updatedActions), [
 			add113,
 			added,
 		]);
-		should.deepEqual(assertations.dispatchedActions, [
-			reduxInit, // init redux in saga
+		should.deepEqual(removeInternalActions(assertations.dispatchedActions), [
 			add113,
 			added,
 		]);
@@ -148,17 +144,15 @@ describe('Application.craeteModelSaga', function () {
 		};
 		const promiseAction = store.dispatch(add113) as Action as IPromiseAction;
 		await promiseAction.__promise;
-		should.deepEqual(assertations.reducedActions, [
-			reduxInit, // init redux in saga
+		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			add113,
 			added,
 		]);
-		should.deepEqual(assertations.updatedActions, [
+		should.deepEqual(removeInternalActions(assertations.updatedActions), [
 			add113,
 			added,
 		]);
-		should.deepEqual(assertations.dispatchedActions, [
-			reduxInit, // init redux in saga
+		should.deepEqual(removeInternalActions(assertations.dispatchedActions), [
 			add113,
 			added,
 		]);
