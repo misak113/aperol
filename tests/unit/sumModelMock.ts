@@ -38,8 +38,6 @@ export const initialSumModel = {
 	sum: 0,
 };
 
-export const reduxInit = { type: '@@redux/INIT' };
-
 export function removeInternalActions(actions?: Action[]) {
 	return actions!
 		.filter((action: Action) => action.type.indexOf('@@redux/') !== 0)

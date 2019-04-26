@@ -1,7 +1,6 @@
 
 import '../../src/polyfill/observable';
 import { put } from '../../src/index';
-import 'babel-polyfill';
 import { createStore, applyMiddleware, Action } from 'redux';
 import * as should from 'should';
 import {

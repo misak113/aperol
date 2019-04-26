@@ -1,5 +1,4 @@
-
-import { createStore, Store, Middleware, Dispatch, Action } from 'redux';
+import { createStore, Store, Middleware, Dispatch, Action, AnyAction } from 'redux';
 import IPromiseAction from './IPromiseAction';
 import ISaga from './ISaga';
 import IUpdaterYield from './IUpdaterYield';
@@ -85,7 +84,7 @@ async function handleAction(dispatch: Dispatch<any>, action: Action) {
 export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
 	const sagaStore = createStore(saga.reducer);
 	const subscriptions: Subscription[] = [];
-	const middleware: Middleware = (store: Store<any>) => (nextDispatch: Dispatch<any>) => (action: any) => {
+	const middleware: Middleware = (store: Store<any>) => (nextDispatch: Dispatch<AnyAction>) => (action: any) => {
 		const result = nextDispatch(action);
 		sagaStore.dispatch(action);
 		const model = sagaStore.getState();
