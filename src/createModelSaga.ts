@@ -9,7 +9,7 @@ import ActionYield from './ActionYield';
 async function update(
 	subscriptions: Subscription[],
 	iterator: Iterator<IUpdaterYield> | AsyncIterator<IUpdaterYield>,
-	dispatch: Dispatch<any>,
+	dispatch: Dispatch<Action>,
 	sourceAction: Action
 ) {
 	let nextResult;
@@ -74,7 +74,7 @@ async function handleObservable(
 	}
 }
 
-async function handleAction(dispatch: Dispatch<any>, action: Action) {
+async function handleAction(dispatch: Dispatch<Action>, action: Action) {
 	const promiseAction = dispatch(action) as IPromiseAction;
 	if (promiseAction.__promise instanceof Promise) {
 		await promiseAction.__promise;
@@ -84,7 +84,7 @@ async function handleAction(dispatch: Dispatch<any>, action: Action) {
 export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
 	const sagaStore = createStore(saga.reducer);
 	const subscriptions: Subscription[] = [];
-	const middleware: Middleware = (store: Store<any>) => (nextDispatch: Dispatch<AnyAction>) => (action: any) => {
+	const middleware: Middleware = (store: Store<any>) => (nextDispatch: Dispatch<AnyAction>) => (action: Action) => {
 		const result = nextDispatch(action);
 		sagaStore.dispatch(action);
 		const model = sagaStore.getState();
