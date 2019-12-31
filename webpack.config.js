@@ -6,6 +6,7 @@ const tsLoader = require('./webpack/tsLoader');
 const babelLoader = require('./webpack/babelLoader');
 
 module.exports = {
+	mode: parameters.environment === 'production' ? 'production' : 'development',
 	entry: [
 		'./src/index',
 	],
@@ -31,16 +32,4 @@ module.exports = {
 			babelLoader,
 		],
 	},
-}
-
-switch (parameters.environment) {
-	case 'production':
-		module.exports.plugins.push(new webpack.optimize.UglifyJsPlugin());
-		break;
-	case 'test':
-		break;
-	case 'dev':
-		break;
-	default:
-		throw new Error('Unknown environment ' + parameters.environment);
 }
