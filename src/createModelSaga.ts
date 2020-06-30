@@ -69,14 +69,14 @@ async function handleObservable(
 		subscription,
 		sourceAction,
 	} as ObservableSubscribed<Action>) as Action as IPromiseAction;
-	if (promiseObservableSubscribed.__promise instanceof Promise) {
+	if (promiseObservableSubscribed?.__promise instanceof Promise) {
 		await promiseObservableSubscribed.__promise;
 	}
 }
 
 async function handleAction(dispatch: Dispatch<Action>, action: Action) {
 	const promiseAction = dispatch(action) as IPromiseAction;
-	if (promiseAction.__promise instanceof Promise) {
+	if (promiseAction?.__promise instanceof Promise) {
 		await promiseAction.__promise;
 	}
 }
