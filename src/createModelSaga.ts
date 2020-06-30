@@ -8,11 +8,11 @@ import ActionYield from './ActionYield';
 
 async function update(
 	subscriptions: Subscription[],
-	iterator: Iterator<IUpdaterYield> | AsyncIterator<IUpdaterYield>,
+	iterator: Iterator<IUpdaterYield, any, IUpdaterYield | undefined> | AsyncIterator<IUpdaterYield, any, IUpdaterYield | undefined>,
 	dispatch: Dispatch<Action>,
 	sourceAction: Action
 ) {
-	let nextResult;
+	let nextResult: IUpdaterYield | undefined;
 	do {
 		let item: IteratorResult<IUpdaterYield> = await iterator.next(nextResult);
 		nextResult = undefined;
@@ -20,7 +20,7 @@ async function update(
 			break;
 		} else
 		if (isPromiseIteration(item.value)) {
-			const promiseResult = await item.value;
+			const promiseResult: IUpdaterYield = await item.value;
 			if (isObservableIteration(promiseResult)) {
 				await handleObservable(dispatch, promiseResult.observable, subscriptions, sourceAction);
 			} else
