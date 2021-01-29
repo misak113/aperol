@@ -66,7 +66,7 @@ export function addAmount(amount: number) {
 }
 
 export const sumSaga = {
-	reducer(model: ISumModel = initialSumModel, action: IAdd & ISubtract) {
+	reducer(model: ISumModel = initialSumModel, action: IAdd | ISubtract) {
 		assertations.reducedActions!.push(action);
 		switch (action.type) {
 			case 'Add':
@@ -115,7 +115,7 @@ export const sumSaga = {
 };
 
 export const asyncIteratorSumSaga = {
-	reducer(model: ISumModel = initialSumModel, action: IAdd & ISubtract) {
+	reducer(model: ISumModel = initialSumModel, action: IAdd | ISubtract) {
 		assertations.reducedActions!.push(action);
 		switch (action.type) {
 			case 'Add':
