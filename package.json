@@ -15,7 +15,8 @@
     "access": "public"
   },
   "scripts": {
-    "build": "webpack --config=webpack.config.js",
+    "build": "npm run build-declarations && webpack --config=webpack.config.js",
+    "build-declarations": "tsc --declaration",
     "prebuild": "rm -rf dist/*",
     "prepare": "npm run build",
     "test": "env NODE_ENV=test TS_NODE_PROJECT=tsconfig.test.json mocha --opts mocha.opts",
