@@ -1,6 +1,6 @@
 {
   "name": "aperol",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "JS library for asynchronous processing of side effects in action based application.",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
