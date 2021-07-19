@@ -25,7 +25,7 @@ export default function combineSagas<TModel extends ICombinedModel>(
 		{}
 	));
 	const updater = async function* (model: TModel, action: Action) {
-		for (let key of sagaKeys) {
+		const values = await Promise.all(sagaKeys.map(async function* (key: string) {
 			const saga = sagas[key];
 			const iterator = saga.updater(model[key], action);
 			let nextResult;
@@ -36,6 +36,9 @@ export default function combineSagas<TModel extends ICombinedModel>(
 				}
 				nextResult = yield item.value;
 			} while (true);
+		}));
+		for (const item of values) {
+			yield* item;
 		}
 	};
 	return {
