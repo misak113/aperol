@@ -3,6 +3,7 @@ import { combineReducers, ReducersMapObject } from 'redux';
 import ISaga from './ISaga';
 import { Action } from 'redux';
 import IUpdaterYield from './IUpdaterYield';
+import { createDeferred, IDeferred } from './Promise/deferred';
 
 export interface ISagasMapObject {
 	[key: string]: ISaga<any>;
@@ -24,7 +25,51 @@ export default function combineSagas<TModel extends ICombinedModel>(
 		},
 		{}
 	));
-	const updater = async function* (model: TModel, action: Action) {
+	const updater = function (model: TModel, action: Action) {
+
+		let nextDeferred: IDeferred<void> | undefined = undefined;
+		let done = false;
+		let errorsQueue: Error[] = [];
+		const valuesQueue: unknown[] = [];
+
+		function doYield(value: unknown) {
+			valuesQueue.push(value);
+			nextDeferred?.resolve();
+		}
+		function doneYield() {
+			done = true;
+			nextDeferred?.resolve();
+		}
+		function errYield(error: Error) {
+			errorsQueue.push(error);
+			nextDeferred?.resolve();
+		}
+
+		const combinedIterator: AsyncIterator<IUpdaterYield> = {
+			async next(...args: [] | [undefined]): Promise<IteratorResult<any>> {
+				if (errorsQueue.length > 0) {
+					throw errorsQueue.shift();
+				}
+				if (valuesQueue.length > 0) {
+					return {
+						value: valuesQueue.shift(),
+						done: false,
+					};
+				}
+				if (done) {
+					return {
+						value: undefined,
+						done: true,
+					};
+				}
+				if (!nextDeferred) {
+					nextDeferred = createDeferred();
+				}
+				await nextDeferred.promise;
+				nextDeferred = undefined;
+				return this.next(...args);
+			},
+		};
 
 		const invoke = async function* (key: string) {
 			const saga = sagas[key];
@@ -39,45 +84,26 @@ export default function combineSagas<TModel extends ICombinedModel>(
 			} while (true);
 		};
 
-		const promises: Promise<any[]>[] = [];
-		const results: any[] = [];
-		const errors: Error[] = [];
-		for (const sagaKey of sagaKeys) {
+		Promise.allSettled(sagaKeys.map(async (sagaKey: string) => {
 			const generator = invoke(sagaKey);
-			const promise = (async function () {
-				const values: any[] = [];
-				let nextResult;
+			let nextResult;
+			try {
 				do {
 					let item: IteratorResult<IUpdaterYield> = await generator.next(nextResult);
 					if (item.done) {
 						break;
 					}
 					nextResult = item.value;
-					values.push(item.value);
+					doYield(item.value);
 				} while (true);
-				return values;
-			})();
-			promises.push(promise);
-			promise.then(
-				(value: any) => {
-					results.push(value);
-					promises.splice(promises.indexOf(promise), 1);
-				},
-				(error: Error) => {
-					errors.push(error);
-					promises.splice(promises.indexOf(promise), 1);
-				},
-			);
-		}
-		while (promises.length > 0) {
-			await Promise.race(promises);
-			while (results.length > 0) {
-				yield* results.shift();
+			} catch (error) {
+				errYield(error);
+				throw error;
 			}
-			while (errors.length > 0) {
-				throw errors.shift();
-			}
-		}
+		}))
+		.finally(() => doneYield());
+
+		return combinedIterator;
 	};
 	return {
 		reducer,
