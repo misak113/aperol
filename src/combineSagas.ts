@@ -4,6 +4,7 @@ import ISaga from './ISaga';
 import { Action } from 'redux';
 import IUpdaterYield from './IUpdaterYield';
 import { createDeferred, IDeferred } from './Promise/deferred';
+import { IUpdaterContext } from './createModelSaga';
 
 export interface ISagasMapObject {
 	[key: string]: ISaga<any>;
@@ -25,7 +26,8 @@ export default function combineSagas<TModel extends ICombinedModel>(
 		},
 		{}
 	));
-	const updater = function (model: TModel, action: Action) {
+	const updater = function (this: IUpdaterContext, model: TModel, action: Action) {
+		const updaterContext = this;
 
 		let nextDeferred: IDeferred<void> | undefined = undefined;
 		let done = false;
@@ -76,6 +78,7 @@ export default function combineSagas<TModel extends ICombinedModel>(
 			const iterator = saga.updater(model[key], action);
 			let nextResult;
 			do {
+				updaterContext.currentSaga = saga;
 				let item: IteratorResult<IUpdaterYield> = await iterator.next(nextResult);
 				if (item.done) {
 					break;
@@ -84,7 +87,7 @@ export default function combineSagas<TModel extends ICombinedModel>(
 			} while (true);
 		};
 
-		Promise.allSettled(sagaKeys.map(async (sagaKey: string) => {
+		const iterateFns = sagaKeys.map((sagaKey: string) => async () => {
 			const generator = invoke(sagaKey);
 			let nextResult;
 			try {
@@ -100,13 +103,20 @@ export default function combineSagas<TModel extends ICombinedModel>(
 				errYield(error);
 				throw error;
 			}
-		}))
-		.finally(() => doneYield());
+		});
+
+		// If profiling, the synchronous processing is required to see better stack trace
+		const updatersPromise = updaterContext.profiler
+		? iterateFns.reduce((allPromise: Promise<void>, fn: () => Promise<void>) => allPromise.finally(fn), Promise.resolve())
+		: Promise.allSettled(iterateFns.map((fn: () => Promise<void>) => fn()));
+
+		updatersPromise.finally(() => doneYield());
 
 		return combinedIterator;
 	};
 	return {
 		reducer,
 		updater,
+		__combinedSagas: sagas,
 	};
 }
