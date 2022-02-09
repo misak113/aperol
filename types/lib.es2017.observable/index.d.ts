@@ -50,7 +50,7 @@ interface Subscription {
 	unsubscribe(): void;
 
 	// A boolean value indicating whether the subscription is closed
-	closed(): boolean;
+	get closed(): boolean;
 }
 
 interface SubscriberFunction<TValue, TError extends Error> {
@@ -83,5 +83,5 @@ interface SubscriptionObserver<TValue, TError extends Error> {
 	complete(): void;
 
 	// A boolean value indicating whether the subscription is closed
-	closed(): boolean;
+	get closed(): boolean;
 }
