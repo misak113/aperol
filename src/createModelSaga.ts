@@ -9,7 +9,7 @@ import { startProfiler, IProfilerOptions, IProfiler } from './profiler';
 import { ISagasMapObject } from './combineSagas';
 
 export interface IUpdaterContext {
-	currentSaga: ISaga<unknown> | null;
+	currentSaga: ISaga<unknown, unknown, unknown> | null;
 	combinedSagas: ISagasMapObject | null;
 	profiler: IProfiler | null;
 }
@@ -106,7 +106,7 @@ export interface IOptions {
 	profiler?: IProfilerOptions;
 }
 
-export default function createModelSaga<TModel>(saga: ISaga<TModel>, options: IOptions = {}) {
+export default function createModelSaga<TModel>(saga: ISaga<TModel, unknown, unknown>, options: IOptions = {}) {
 	let profiler: IProfiler | null = null;
 	if (options.profiler) {
 		profiler = startProfiler(options.profiler);
