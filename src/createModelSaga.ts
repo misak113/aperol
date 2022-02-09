@@ -102,6 +102,24 @@ async function handleAction(dispatch: Dispatch<Action>, action: Action) {
 	}
 }
 
+function startGarbageCollector(subscriptions: Subscription[]) {
+	const intervalHandler = setInterval(
+		() => {
+			for (let index in subscriptions) {
+				if (subscriptions[index].closed) {
+					subscriptions.splice(parseInt(index), 1);
+				}
+			}
+		},
+		10e3,
+	);
+	return {
+		stop() {
+			clearInterval(intervalHandler);
+		},
+	};
+}
+
 export interface IOptions {
 	profiler?: IProfilerOptions;
 }
@@ -132,8 +150,10 @@ export default function createModelSaga<TModel>(saga: ISaga<TModel, unknown, unk
 		});
 		return result as any;
 	};
+	const garbageCollector = startGarbageCollector(subscriptions);
 	const destroy = () => {
 		profiler?.stop();
+		garbageCollector.stop();
 		subscriptions.forEach((subscription: Subscription) => subscription.unsubscribe());
 	};
 	return {
