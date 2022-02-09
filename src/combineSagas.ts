@@ -6,7 +6,7 @@ import IUpdaterYield from './IUpdaterYield';
 import { createDeferred, IDeferred } from './Promise/deferred';
 
 export interface ISagasMapObject {
-	[key: string]: ISaga<any>;
+	[key: string]: ISaga<any, any, any>;
 }
 
 export interface ICombinedModel {
@@ -15,7 +15,7 @@ export interface ICombinedModel {
 
 export default function combineSagas<TModel extends ICombinedModel>(
 	sagas: ISagasMapObject
-): ISaga<TModel> {
+): ISaga<TModel, unknown, unknown> {
 	const sagaKeys = Object.keys(sagas);
 	const reducer = combineReducers<TModel>(sagaKeys.reduce<ReducersMapObject>(
 		(reducers: ReducersMapObject, key: string) => {
@@ -74,7 +74,7 @@ export default function combineSagas<TModel extends ICombinedModel>(
 		const invoke = async function* (key: string) {
 			const saga = sagas[key];
 			const iterator = saga.updater(model[key], action);
-			let nextResult;
+			let nextResult: undefined;
 			do {
 				let item: IteratorResult<IUpdaterYield> = await iterator.next(nextResult);
 				if (item.done) {
@@ -86,7 +86,7 @@ export default function combineSagas<TModel extends ICombinedModel>(
 
 		Promise.allSettled(sagaKeys.map(async (sagaKey: string) => {
 			const generator = invoke(sagaKey);
-			let nextResult;
+			let nextResult: any;
 			try {
 				do {
 					let item: IteratorResult<IUpdaterYield> = await generator.next(nextResult);

@@ -77,13 +77,13 @@ describe('Application.craeteModelSaga', function () {
 			autoAdding113,
 		]);
 		autoAdding113.__doAdd!();
-		await new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise<void>((resolve: () => void) => setTimeout(resolve, 2));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
 		]);
 		autoAdding113.__doAdd!();
-		await new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise<void>((resolve: () => void) => setTimeout(resolve, 2));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
@@ -108,7 +108,7 @@ describe('Application.craeteModelSaga', function () {
 			autoAdding113,
 		]);
 		autoAdding113.__doAdd!();
-		await new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise<void>((resolve: () => void) => setTimeout(resolve, 2));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
