@@ -12,7 +12,7 @@ module.exports = {
 	],
 	output: {
 		path: parameters.distPath,
-		filename: 'index.js',
+		filename: 'es5.js',
 		library: '',
 		libraryTarget: 'commonjs'
 	},

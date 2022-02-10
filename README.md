@@ -111,6 +111,9 @@ When you plan to use aperol in node.js on backend it should be destroyed model s
 modelSaga.destroy();
 ```
 
+## ES5 transpiled and bundled
+If you do not transpile code or not using bundler (like webpack) and need to have pre-transpiled code, import file `aperol/dist/es5` instead.
+
 ## Notes
 *library automatically polyfill Observable if not available in global Symbol context with `zen-observable`*
 *library automatically polyfill asyncIterator if not available in global Symbol context*
