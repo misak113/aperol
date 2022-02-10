@@ -88,7 +88,7 @@ export const sumSaga = {
 		assertations.updatedModels!.push(model);
 		switch (action.type) {
 			case 'Add':
-				const uid = yield addAmount(action.amount);
+				const uid: string = yield addAmount(action.amount);
 				yield put<IAdded>({
 					type: 'Added',
 					uid,

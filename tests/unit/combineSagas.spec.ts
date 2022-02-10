@@ -132,5 +132,6 @@ describe('Application.combineSaga', function () {
 			113,
 		]);
 		should.strictEqual(shownWarningsCount, 1);
+		modelSaga.destroy();
 	});
 });

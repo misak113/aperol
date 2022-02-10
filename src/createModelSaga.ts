@@ -1,16 +1,25 @@
 import { createStore, Store, Middleware, Dispatch, Action, AnyAction } from 'redux';
 import IPromiseAction from './IPromiseAction';
 import ISaga from './ISaga';
-import IUpdaterYield from './IUpdaterYield';
+import IUpdaterYield, { AnyIterator } from './IUpdaterYield';
 import ObservableSubscribed from './ObservableSubscribed';
 import ObservableYield from './ObservableYield';
 import ActionYield from './ActionYield';
+import { startProfiler, IProfilerOptions, IProfiler } from './profiler';
+import { ISagasMapObject } from './combineSagas';
+
+export interface IUpdaterContext {
+	currentSagas: ISaga<unknown, unknown, unknown>[];
+	lastSagas: ISaga<unknown, unknown, unknown>[];
+	combinedSagas: ISagasMapObject | null;
+	profiler: IProfiler | null;
+}
 
 async function update(
 	subscriptions: Subscription[],
-	iterator: Iterator<IUpdaterYield, any, IUpdaterYield | undefined> | AsyncIterator<IUpdaterYield, any, IUpdaterYield | undefined>,
+	iterator: AnyIterator,
 	dispatch: Dispatch<Action>,
-	sourceAction: Action
+	sourceAction: Action,
 ) {
 	let nextResult: IUpdaterYield | undefined;
 	do {
@@ -81,15 +90,50 @@ async function handleAction(dispatch: Dispatch<Action>, action: Action) {
 	}
 }
 
-export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
+function startGarbageCollector(subscriptions: Subscription[]) {
+	const intervalHandler = setInterval(
+		() => {
+			for (let index in subscriptions) {
+				if (subscriptions[index].closed) {
+					subscriptions.splice(parseInt(index), 1);
+				}
+			}
+		},
+		10e3,
+	);
+	return {
+		stop() {
+			clearInterval(intervalHandler);
+		},
+	};
+}
+
+export interface IOptions {
+	profiler?: IProfilerOptions;
+}
+
+export default function createModelSaga<TModel>(saga: ISaga<TModel, unknown, unknown>, options: IOptions = {}) {
+	const updaterContext: IUpdaterContext = {
+		currentSagas: [],
+		lastSagas: [],
+		profiler: null,
+		combinedSagas: saga.__combinedSagas ?? null,
+	};
+	if (options.profiler) {
+		updaterContext.profiler = startProfiler(options.profiler, updaterContext);
+	}
 	const sagaStore = createStore(saga.reducer);
 	const subscriptions: Subscription[] = [];
 	const middleware: Middleware = (store: Store<any>) => (nextDispatch: Dispatch<AnyAction>) => (action: Action) => {
 		const result = nextDispatch(action);
 		sagaStore.dispatch(action);
 		const model = sagaStore.getState();
-		const iterator = saga.updater(model, action);
+		const iterator: AnyIterator = saga.updater.call(updaterContext, model, action);
+
 		const promise = update(subscriptions, iterator, store.dispatch, action);
+		if (updaterContext.profiler) {
+			promise.finally(() => updaterContext.profiler?.handleProfilerViolation(action));
+		}
 		Object.defineProperty(result, '__promise', {
 			enumerable: false,
 			configurable: false,
@@ -98,7 +142,10 @@ export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
 		});
 		return result as any;
 	};
+	const garbageCollector = startGarbageCollector(subscriptions);
 	const destroy = () => {
+		updaterContext.profiler?.stop();
+		garbageCollector.stop();
 		subscriptions.forEach((subscription: Subscription) => subscription.unsubscribe());
 	};
 	return {
