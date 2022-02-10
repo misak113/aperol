@@ -14,3 +14,6 @@ type IUpdaterYield = Promise<any>
 	| ObservableYield<Observable<Iterator<ISubUpdaterYield> | AsyncIterator<ISubUpdaterYield>, Error>>
 	| ActionYield;
 export default IUpdaterYield;
+
+export type AnyIterator = Iterator<IUpdaterYield, any, IUpdaterYield | undefined>
+	| AsyncIterator<IUpdaterYield, any, IUpdaterYield | undefined>;

@@ -75,11 +75,13 @@ export default function combineSagas<TModel extends ICombinedModel>(
 
 		const invoke = async function* (key: string) {
 			const saga = sagas[key];
-			const iterator = saga.updater(model[key], action);
+			const iterator = saga.updater.call(updaterContext, model[key], action);
 			let nextResult: undefined;
 			do {
-				updaterContext.currentSaga = saga;
+				updaterContext.currentSagas.push(saga);
 				let item: IteratorResult<IUpdaterYield> = await iterator.next(nextResult);
+				updaterContext.lastSagas = [...updaterContext.currentSagas];
+				updaterContext.currentSagas.splice(updaterContext.currentSagas.indexOf(saga), 1);
 				if (item.done) {
 					break;
 				}
