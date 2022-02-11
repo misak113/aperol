@@ -111,6 +111,17 @@ When you plan to use aperol in node.js on backend it should be destroyed model s
 modelSaga.destroy();
 ```
 
+### Profiler
+You can start saga models with profiler which is measuring time of every single action processed by sagas
+```js
+const modelSaga = createModelSaga(appSaga, {
+	profiler: {
+		thresholdMs: 1e3, // Show warnings when action execution reached 1 second
+		onWarning: (message, action) => console.log(message, action), // Optional callback far warning. Default is console.warn function.
+	},
+});
+```
+
 ## ES5 transpiled and bundled
 If you do not transpile code or not using bundler (like webpack) and need to have pre-transpiled code, import file `aperol/dist/es5` instead.
 
