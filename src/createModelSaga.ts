@@ -81,7 +81,25 @@ async function handleAction(dispatch: Dispatch<Action>, action: Action) {
 	}
 }
 
-export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
+function startGarbageCollector(subscriptions: Subscription[]) {
+	const intervalHandler = setInterval(
+		() => {
+			for (let index in subscriptions) {
+				if (subscriptions[index].closed) {
+					subscriptions.splice(parseInt(index), 1);
+				}
+			}
+		},
+		10e3,
+	);
+	return {
+		stop() {
+			clearInterval(intervalHandler);
+		},
+	};
+}
+
+export default function createModelSaga<TModel>(saga: ISaga<TModel, unknown, unknown>) {
 	const sagaStore = createStore(saga.reducer);
 	const subscriptions: Subscription[] = [];
 	const middleware: Middleware = (store: Store<any>) => (nextDispatch: Dispatch<AnyAction>) => (action: Action) => {
@@ -98,7 +116,9 @@ export default function createModelSaga<TModel>(saga: ISaga<TModel>) {
 		});
 		return result as any;
 	};
+	const garbageCollector = startGarbageCollector(subscriptions);
 	const destroy = () => {
+		garbageCollector.stop();
 		subscriptions.forEach((subscription: Subscription) => subscription.unsubscribe());
 	};
 	return {

@@ -58,6 +58,7 @@ describe('Application.craeteModelSaga', function () {
 		should.deepEqual(assertations.addedAmounts, [
 			113,
 		]);
+		modelSaga.destroy();
 	});
 
 	it('should reduce action & then apply async updater with yielded observable', async function () {
@@ -77,18 +78,19 @@ describe('Application.craeteModelSaga', function () {
 			autoAdding113,
 		]);
 		autoAdding113.__doAdd!();
-		await new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise<void>((resolve: () => void) => setTimeout(resolve, 2));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
 		]);
 		autoAdding113.__doAdd!();
-		await new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise<void>((resolve: () => void) => setTimeout(resolve, 2));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
 			added,
 		]);
+		modelSaga.destroy();
 	});
 
 	it('should unsubscribe all yielded observables after destroy', async function () {
@@ -108,7 +110,7 @@ describe('Application.craeteModelSaga', function () {
 			autoAdding113,
 		]);
 		autoAdding113.__doAdd!();
-		await new Promise((resolve: () => void) => setTimeout(resolve, 2));
+		await new Promise<void>((resolve: () => void) => setTimeout(resolve, 2));
 		should.deepEqual(removeInternalActions(assertations.reducedActions), [
 			autoAdding113,
 			added,
@@ -129,6 +131,7 @@ describe('Application.craeteModelSaga', function () {
 		const observableSubscribed = assertations.reducedActions!
 			.find((action: Action) => action.type === ObservableSubscribed);
 		should.notStrictEqual(observableSubscribed, undefined);
+		modelSaga.destroy();
 	});
 
 	it('should work even with async iterators as updater', async function () {
@@ -163,5 +166,6 @@ describe('Application.craeteModelSaga', function () {
 		should.deepEqual(assertations.addedAmounts, [
 			113,
 		]);
+		modelSaga.destroy();
 	});
 });
