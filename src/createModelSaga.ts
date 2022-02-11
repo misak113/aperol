@@ -5,12 +5,30 @@ import IUpdaterYield from './IUpdaterYield';
 import ObservableSubscribed from './ObservableSubscribed';
 import ObservableYield from './ObservableYield';
 import ActionYield from './ActionYield';
+import { IProfiler, IProfilerOptions, startProfiler } from './Profiler/profiler';
+import AnyIterator from './AnyIterator';
 
 async function update(
 	subscriptions: Subscription[],
-	iterator: Iterator<IUpdaterYield, any, IUpdaterYield | undefined> | AsyncIterator<IUpdaterYield, any, IUpdaterYield | undefined>,
+	iterator: AnyIterator,
 	dispatch: Dispatch<Action>,
-	sourceAction: Action
+	sourceAction: Action,
+	profiler: IProfiler | null,
+) {
+	const tracking = profiler?.track(iterator, sourceAction);
+	try {
+		return await doUpdate(subscriptions, iterator, dispatch, sourceAction, profiler);
+	} finally {
+		tracking?.stop();
+	}
+}
+
+async function doUpdate(
+	subscriptions: Subscription[],
+	iterator: AnyIterator,
+	dispatch: Dispatch<Action>,
+	sourceAction: Action,
+	profiler: IProfiler | null,
 ) {
 	let nextResult: IUpdaterYield | undefined;
 	do {
@@ -22,7 +40,7 @@ async function update(
 		if (isPromiseIteration(item.value)) {
 			const promiseResult: IUpdaterYield = await item.value;
 			if (isObservableIteration(promiseResult)) {
-				await handleObservable(dispatch, promiseResult.observable, subscriptions, sourceAction);
+				await handleObservable(dispatch, promiseResult.observable, subscriptions, sourceAction, profiler);
 			} else
 			if (isActionIteration(promiseResult)) {
 				await handleAction(dispatch, promiseResult.action);
@@ -31,7 +49,7 @@ async function update(
 			}
 		} else
 		if (isObservableIteration(item.value)) {
-			await handleObservable(dispatch, item.value.observable, subscriptions, sourceAction);
+			await handleObservable(dispatch, item.value.observable, subscriptions, sourceAction, profiler);
 		} else
 		if (isActionIteration(item.value)) {
 			await handleAction(dispatch, item.value.action);
@@ -55,12 +73,13 @@ function isActionIteration(value: IUpdaterYield): value is ActionYield {
 
 async function handleObservable(
 	dispatch: Dispatch<Action>,
-	observable: Observable<Iterator<IUpdaterYield> | AsyncIterator<IUpdaterYield>, Error>,
+	observable: Observable<AnyIterator, Error>,
 	subscriptions: Subscription[],
 	sourceAction: Action,
+	profiler: IProfiler | null,
 ) {
-	const subscription = observable.subscribe(function (observableIterator: Iterator<IUpdaterYield> | AsyncIterator<IUpdaterYield>) {
-		update(subscriptions, observableIterator, dispatch, sourceAction);
+	const subscription = observable.subscribe(function (observableIterator: AnyIterator) {
+		update(subscriptions, observableIterator, dispatch, sourceAction, profiler);
 	});
 	subscriptions.push(subscription);
 	const promiseObservableSubscribed = dispatch({
@@ -99,15 +118,20 @@ function startGarbageCollector(subscriptions: Subscription[]) {
 	};
 }
 
-export default function createModelSaga<TModel>(saga: ISaga<TModel, unknown, unknown>) {
+export interface IOptions {
+	profiler?: IProfilerOptions;
+}
+
+export default function createModelSaga<TModel>(saga: ISaga<TModel, unknown, unknown>, options?: IOptions) {
 	const sagaStore = createStore(saga.reducer);
 	const subscriptions: Subscription[] = [];
+	const profiler = options?.profiler ? startProfiler(options.profiler) : null;
 	const middleware: Middleware = (store: Store<any>) => (nextDispatch: Dispatch<AnyAction>) => (action: Action) => {
 		const result = nextDispatch(action);
 		sagaStore.dispatch(action);
 		const model = sagaStore.getState();
 		const iterator = saga.updater(model, action);
-		const promise = update(subscriptions, iterator, store.dispatch, action);
+		const promise = update(subscriptions, iterator, store.dispatch, action, profiler);
 		Object.defineProperty(result, '__promise', {
 			enumerable: false,
 			configurable: false,
